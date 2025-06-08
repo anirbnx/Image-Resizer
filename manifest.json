@@ -1,0 +1,16 @@
+{
+  "name": "Image Resizer - Anirban Roy",
+  "short_name": "Image Resizer",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#007BFF",
+  "theme_color": "#007BFF",
+  "description": "Resize image to 6x2 cm at 200 DPI, compress and download JPG",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
+}

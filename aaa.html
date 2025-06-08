@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Anirban Roy - JPG Resizer</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: #007BFF; /* Blue background */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 40px auto 20px auto;
+      flex-grow: 1;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      color: #222;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"],
+    input[type="text"],
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #dropZone {
+      border: 2px dashed #999;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+      color: #555;
+      margin: 15px 0;
+      background-color: #f0f8ff;
+    }
+
+    #preview {
+      display: block;
+      max-width: 100%;
+      margin: 15px auto;
+      border: 1px solid #ccc;
+    }
+
+    #fileSize {
+      text-align: center;
+      font-size: 14px;
+      color: #444;
+      margin-top: 10px;
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      padding: 15px 0;
+      font-size: 14px;
+      background: #0056b3;
+    }
+
+    footer a {
+      color: #ffdd57;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 20px;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Anirban Roy</h1>
+    <h2>Resize to 6cm × 2cm @ 200 DPI — JPG Only</h2>
+
+    <div id="dropZone">Drag & Drop Image Here or Use File Picker</div>
+    <input type="file" id="imageInput" accept="image/*" />
+    <input type="text" id="fileNameInput" placeholder="Enter file name (without extension)" />
+    <button onclick="resizeAndDownload()">Resize & Download JPG</button>
+
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="preview" alt="Preview will appear here" />
+    <div id="fileSize"></div>
+
+    <a id="downloadLink" style="display: none;">
+      <button>Download JPG</button>
+    </a>
+  </div>
+
+  <footer>
+    Connect with me:
+    <a href="https://facebook.com/yourid" target="_blank">Facebook</a> |
+    <a href="https://instagram.com/yourid" target="_blank">Instagram</a> |
+    <a href="https://github.com/yourid" target="_blank">GitHub</a>
+  </footer>
+
+  <script>
+    const DPI = 200;
+    const cmToPx = cm => Math.round((cm / 2.54) * DPI);
+    const targetWidth = cmToPx(6);
+    const targetHeight = cmToPx(2);
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const preview = document.getElementById('preview');
+    const fileSizeDisplay = document.getElementById('fileSize');
+    const downloadLink = document.getElementById('downloadLink');
+    const imageInput = document.getElementById('imageInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileNameInput = document.getElementById('fileNameInput');
+
+    let img = new Image();
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        alert("Please upload a valid image.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = evt => {
+        img = new Image();
+        img.onload = () => {
+          drawAndPreview();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    dropZone.addEventListener("dragover", e => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#007bff";
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.borderColor = "#999";
+    });
+
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#999";
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    imageInput.addEventListener("change", e => {
+      const file = e.target.files[0];
+      handleFile(file);
+    });
+
+    function drawAndPreview() {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      const sourceRatio = img.width / img.height;
+      const targetRatio = targetWidth / targetHeight;
+
+      let sx, sy, sw, sh;
+
+      if (sourceRatio > targetRatio) {
+        sh = img.height;
+        sw = sh * targetRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.width;
+        sh = sw / targetRatio;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+      }
+
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+
+      const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+      preview.src = dataURL;
+      downloadLink.href = dataURL;
+
+      const sizeInKB = Math.round((dataURL.length * 3 / 4) / 1024);
+      fileSizeDisplay.textContent = `Estimated File Size: ${sizeInKB} KB`;
+
+      const filename = fileNameInput.value.trim() || "resized";
+      downloadLink.download = filename + ".jpg";
+      downloadLink.style.display = 'inline-block';
+    }
+
+    function resizeAndDownload() {
+      if (!img.src) return alert("Please upload an image first.");
+      drawAndPreview();
+      downloadLink.click();
+    }
+  </script>
+</body>
+</html>
